@@ -1,6 +1,9 @@
+#!/usr/bin/env python3
+
 from dataclasses import dataclass
 
 import requests
+import json
 
 NOMINATIM_CITY_SEARCH="https://nominatim.openstreetmap.org/search?format=json&q="
 OVERPASS_API="https://overpass-api.de/api/interpreter"
@@ -9,8 +12,8 @@ SR_USER_AGENT={"User-Agent": "ShadowrunMapper/1.0"}
 @dataclass
 class BBox:
     south: float
-    west: float
     north: float
+    west: float
     east: float
 
 #----------------------------------------------------
@@ -49,4 +52,4 @@ def get_elements_in_square(bbox: BBox):
     """
     resp = requests.post(OVERPASS_API, data=query.encode(), headers=SR_USER_AGENT, timeout=240)
     resp.raise_for_status()
-    return resp.json()
+    return resp.json()["elements"]
