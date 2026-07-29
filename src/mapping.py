@@ -1,6 +1,7 @@
 # src/mapping.py
 
 import requests
+import osmium
 
 from urllib.parse import urlsplit
 from abc import ABC, abstractmethod
@@ -105,6 +106,9 @@ class GeofabrikDownloader(iGeoDownloader):
         #   way if possible.
         import subprocess
         output = f"{self.data_dir}/{city.lower()}_clipped.osm.pbf"
+        if Path.exists(Path(output)):
+            print(f"{output} already exists. No need to clip.")
+            return
         south, north, west, east = bbox
         subprocess.run([
             "osmium", "extract",

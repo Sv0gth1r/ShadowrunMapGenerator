@@ -1,34 +1,74 @@
-#from mapping import BBox
+
 import folium
+from pathlib import Path
+from statistics import mean
+from typing import List, Dict, Any
 
-def render_map(bbox, pois, city_name):
-    average_lat = (bbox.north + bbox.south) / 2
-    average_lon = (bbox.west + bbox.east) / 2
-    m = folium.Map(location=[average_lat, average_lon], tiles='CartoDB dark_matter')
-    for poi in pois:
-#        print(f"{poi}")
-        if "name" in poi["tags"]:
-            name = poi["tags"]["name"]
-        else:
-            name = "Unknown name"
-        category = poi["tags"]["amenity"]
-        match category:
-            case "hospital"|"clinic"|"pharmacy":
-                color=folium.Icon(color='lightgreen')
-            case "police"|"courthouse"|"prison":
-                color=folium.Icon(color='darkred')
-            case "bar"|"nightclud"|"casino":
-                color=folium.Icon(color='pink')
-            case "bank"|"atm":
-                color=folium.Icon(color='orange')
-            case "computer_club"|"internet_cafe":
-                color=folium.Icon(color='blue')
-            case _:
-                color=folium.Icon(color='lightgray')
+class MapGenerator:
+    fmap: folium.Map = {}
 
-        folium.Marker(
-            location = [poi["lat"], poi["lon"]],
-            popup = f"{name} ({category})",
-            icon=color
-        ).add_to(m)
-        m.save(f"{city_name}_sr.html")
+    def __init__(self, pois: List[Dict[str, Any]], tag_config: Dict[str, Dict[str, Any]]):
+        self.pois = pois
+        self.tag_config = tag_config
+
+    def _get_map_center(self):
+        lats = [poi["lat"] for poi in self.pois]
+        lons = [poi["lon"] for poi in self.pois]
+        center_lat = mean(lats)
+        center_lon = mean(lons)
+        return center_lat, center_lon
+
+    def _category_to_icon_color(self, category: str) -> str:
+        """Map Shadowrun categories to Icon colors for markers."""
+        color_map = {
+            "runner_meet": "orange",
+            "medical": "green",
+            "weapons": "red",
+            "tech": "blue",
+            "food_and_drink": "yellow",
+            "law_enforcement": "purple",
+            "accommodation": "brown",
+            "transportation": "cyan",
+            "underground": "gray",
+        }
+        return color_map.get(category, "white") 
+
+    def _add_pois(self):
+        for poi in self.pois:
+            cat_info = self.tag_config.get(
+                f"{poi['osm_key']}={poi['osm_value']}", {}
+            )
+            popup_html = f"""
+                <div style="font-family: monospace;">
+                    <strong>{poi.get('osm_name', 'Unknown')}</strong><br>
+                    <span style="color: {cat_info.get('color', '#fff')}">
+                        ● {cat_info.get('category', 'Uncategorized')}
+                    </span><br>
+                    <small>{cat_info.get('description', '')}</small>
+                </div>
+            """
+            folium.Marker(
+                location = [poi['lat'], poi['lon']],
+                popup = folium.Popup(popup_html, max_width=300),
+                icon = folium.Icon(
+                    icon = "bullseye",
+                    color = self._category_to_icon_color(cat_info.get('category')),
+                    prefix = "fa",
+                ),
+                tooltip = poi.get('osm_name', ''),
+            ).add_to(self.fmap)
+
+    def generate_map(self, output_path: Path):
+        # get center of map
+        center_lat, center_lon = self._get_map_center()
+        
+        self.fmap = folium.Map(
+            location = [center_lat, center_lon],
+            zoom_start=13,
+            tiles="CartoDB dark_matter"
+        )
+
+        self._add_pois()
+        
+        self.fmap.save(output_path)
+

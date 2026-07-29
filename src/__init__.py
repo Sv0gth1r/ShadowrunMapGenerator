@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 
-from map_renderer import render_map
-from mapping import CityLoader 
 import sys
+from pathlib import Path
+from mapping import CityLoader 
+from city_parser import converter
+from map_renderer import MapGenerator
 
 def main():
     # 1. Get the city name
@@ -10,10 +12,13 @@ def main():
 
     # 2. (Down)Load the city POIs 
     cityLoader = CityLoader()
-    cityLoader.dl_pbf(city_name)
+    city_pbf = cityLoader.dl_pbf(city_name)
 
     # 3. Convert the POIs to shadowrun
+    cityPOIs, tag_config = converter(f"../{city_pbf}")
 
     # 4. Create the final map
-    # render_map(bbox, pois, city_name)
+    mapGen = MapGenerator(cityPOIs, tag_config)
+    mapGen.generate_map(Path(f"{city_name}_SR.html"))
+
 main()
