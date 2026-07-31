@@ -25,10 +25,10 @@ class MapGenerator:
             "medical": "green",
             "weapons": "red",
             "tech": "blue",
-            "food_and_drink": "yellow",
+            "food_and_drink": "beige",
             "law_enforcement": "purple",
-            "accommodation": "brown",
-            "transportation": "cyan",
+            "accommodation": "darkpurple",
+            "transportation": "cadetblue",
             "underground": "gray",
         }
         return color_map.get(category, "white") 

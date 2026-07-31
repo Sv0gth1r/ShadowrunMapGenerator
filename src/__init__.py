@@ -1,12 +1,18 @@
 #!/usr/bin/env python3
 
 import sys
+import json
+import logging.config
+from applogger import *
 from pathlib import Path
 from mapping import CityLoader 
 from city_parser import converter
 from map_renderer import MapGenerator
 
 def main():
+    setup_logging()
+    log("info", "[IN] main")
+
     # 1. Get the city name
     city_name = sys.argv[1]
 
@@ -20,5 +26,6 @@ def main():
     # 4. Create the final map
     mapGen = MapGenerator(cityPOIs, tag_config)
     mapGen.generate_map(Path(f"{city_name}_SR.html"))
+    log("info", "[OUT] main")
 
 main()

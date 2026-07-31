@@ -1,0 +1,79 @@
+{
+  "categories": {
+    "runner_meet": {
+      "osm_tags": [
+        "amenity:bar",
+        "amenity:pub",
+        "amenity:nightclub"
+      ],
+      "color": "#ff6b35",
+      "description": "Locations where runners gather, trade info, and pick up jobs"
+    },
+    "medical": {
+      "osm_tags": [
+        "amenity:hospital",
+        "healthcare:specialist"
+      ],
+      "color": "#4caf50",
+      "description": "Street clinics, DocWagon centers, and black-market surgeons"
+    },
+    "weapons": {
+      "osm_tags": [
+        "shop:military_surplus",
+        "shop:arms_dealer"
+      ],
+      "color": "#d32f2f",
+      "description": "Legitimate arms dealers and underground weapon shops"
+    },
+    "tech": {
+      "osm_tags": [
+        "shop:electronics",
+        "shop:computer_hardware"
+      ],
+      "color": "#2196f3",
+      "description": "Commlink shops, cybertechnicians, and data brokers"
+    },
+    "food_and_drink": {
+      "osm_tags": [
+        "amenity:restaurant",
+        "amenity:fast_food",
+        "amenity:cafe"
+      ],
+      "color": "#ffc107",
+      "description": "Soybucks, noodle stands, and high-end corp dining"
+    },
+    "law_enforcement": {
+      "osm_tags": [
+        "amenity:police",
+        "office:government"
+      ],
+      "color": "#9c27b0",
+      "description": "Lone Star precincts, corporate security offices"
+    },
+    "accommodation": {
+      "osm_tags": [
+        "tourism:hotel",
+        "lodging:motel"
+      ],
+      "color": "#795548",
+      "description": "Safehouses, cheap flophouses, corp hotels"
+    },
+    "transportation": {
+      "osm_tags": [
+        "amenity:parking",
+        "railway:station",
+        "public_transport:station"
+      ],
+      "color": "#00bcd4",
+      "description": "Vehicle drop points, transit hubs"
+    },
+    "underground": {
+      "osm_tags": [
+        "leisure:park",
+        "landuse:recreation_ground"
+      ],
+      "color": "#607d8b",
+      "description": "Gang territories, squatter camps, urban wastelands"
+    }
+  }
+}
