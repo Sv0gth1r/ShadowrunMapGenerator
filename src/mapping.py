@@ -3,6 +3,7 @@
 import requests
 import osmium
 
+from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, DownloadColumn, TransferSpeedColumn
 from urllib.parse import urlsplit
 from abc import ABC, abstractmethod
 from pathlib import Path
@@ -68,6 +69,13 @@ class GeofabrikDownloader(iGeoDownloader):
     def _download(self, url: str, filename: str):
         log("info", f"[IN] _download (url = <{url}>, filename = <{filename}>) GeofabrikDownloader")
         filepath = Path(f"../{self.data_dir}/{urlsplit(url).path.replace('/', '_')}")
+        progress = Progress(
+            SpinnerColumn(),
+            TextColumn("[progress.description]{task.description}"),
+            BarColumn(),
+            DownloadColumn(),
+            TransferSpeedColumn(),
+        )
 
         # Check if the file already exists
         # TODO: check a timestamp to maybe refresh the cache
@@ -82,18 +90,13 @@ class GeofabrikDownloader(iGeoDownloader):
             res = session.get(url, stream=True, timeout=600)
             res.raise_for_status()
 
-            total_size = int(res.headers.get('content-length', 0))
-            dled = 0
-            with open(filepath, "wb") as f:
-                for chunk in res.iter_content(chunk_size=8192):
-                    f.write(chunk)
-                    dled += len(chunk)
-                    if total_size:
-                        percent = (dled / total_size) * 100
-                        print(f"\r  Progress: {percent:5.1f}% [{dled/1e6:.1f}/{total_size/1e6:.1f} MB]")
-            if total_size:
-                print() # New line
-
+            total_size = int(res.headers.get('content-length', 0)) or None
+            with progress:
+                task_id = progress.add_task(f"[green]Downloading {filepath}", total=total_size)
+                with open(filepath, "wb") as f:
+                    for chunk in res.iter_content(chunk_size=8192):
+                        f.write(chunk)
+                        progress.update(task_id, advance=len(chunk))
         else:
             size_mb = filepath.stat().st_size / (1024 * 1024)
             log("info", f"File <{filepath}> ({size_mb} MB) already exists, skipping download")

@@ -1,8 +1,9 @@
 # src/shadowrun_mapper/parser.py
+import json
 import osmium
 from pathlib import Path
+from applogger import log
 from typing import List, Dict, Any
-import json
 
 class POIParser(osmium.SimpleHandler):
     """
