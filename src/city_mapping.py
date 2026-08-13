@@ -1,10 +1,10 @@
 # src/mapping.py
 
 import requests
-import osmium
 import subprocess
 
-from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, DownloadColumn, TransferSpeedColumn
+from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn
+from rich.progress import DownloadColumn, TransferSpeedColumn
 from urllib.parse import urlsplit
 from abc import ABC, abstractmethod
 from pathlib import Path
@@ -12,27 +12,30 @@ from shapely.geometry import Point, shape
 from geotools import geocode_city
 from applogger import log
 
+
 class iGeoDownloader(ABC):
     @abstractmethod
     def get_pbf(self, city: str) -> Path:
         ...
 
+
 class BBBikeDownloader(iGeoDownloader):
- 
+
     def __init__(self, data_dir: str):
         log("info", "[IN] __init__ BBBikeDownloader")
         self.data_dir = data_dir
         log("info", "[OUT] __init__ BBBikeDownloader")
 
-#-------------------------------------------------------------
+# ------------------------------------------------------------
 # get_pbf: Fetch a pbf file for a city
 #   city: str -> The city we want the pbf associated
 #   return Path -> a path to the pbf containing the city
 # misc: this function is inherited from iGeoDownloader
-#------------------------------------------------------------- 
+# ------------------------------------------------------------
     def get_pbf(self, city: str) -> Path:
         log("warning", "Not implemented")
         raise NotImplementedError
+
 
 class GeofabrikDownloader(iGeoDownloader):
 
@@ -43,12 +46,12 @@ class GeofabrikDownloader(iGeoDownloader):
         self.data_dir = data_dir
         log("info", "[OUT] __init__ GeofabrikDownloader")
 
-#-------------------------------------------------------------
+# -------------------------------------------------------------
 # get_pbf: Fetch a pbf file for a city
 #   city: str -> The city we want the pbf associated
 #   return Path -> a path to the pbf containing the city
 # misc: this function is inherited from iGeoDownloader
-#-------------------------------------------------------------
+# -------------------------------------------------------------
     def get_pbf(self, city: str) -> Path:
         log("info", f"[IN] get_pbf (city = <{city}>) GeofabrikDownloader")
         # 1. Get coordinates (lat/lon)
@@ -57,7 +60,7 @@ class GeofabrikDownloader(iGeoDownloader):
         # 2. Find the smallest geofabrik region for this coordinates
         # TODO: In future version, search in DB if we already have a fitting region
         region = self.find_geofabrik_region(coordinates["lat"], coordinates["lon"])
-        
+
         # 3. Download the region from geofabrik
         print(f"get_pbf | {region}")
         log("info", f"Geofabrik URL: {region['urls']['pbf']}")
@@ -81,20 +84,24 @@ class GeofabrikDownloader(iGeoDownloader):
 
         # Check if the file already exists
         # TODO: check a timestamp to maybe refresh the cache
-        if not filepath.exists(): 
+        if not filepath.exists():
             log("info", f"Downloading {filename} from geofabrik")
             filepath.parent.mkdir(parents=True, exist_ok=True)
             filepath.touch()
             session = requests.Session()
-            retries = requests.adapters.Retry(total=3, backoff_factor=1, status_forcelist=[429, 500, 502, 503])
-            adapter = requests.adapters.HTTPAdapter(max_retries = retries)
+            retries = requests.adapters.Retry(
+                total=3,
+                backoff_factor=1,
+                status_forcelist=[429, 500, 502, 503])
+            adapter = requests.adapters.HTTPAdapter(max_retries=retries)
             session.mount("https://", adapter)
             res = session.get(url, stream=True, timeout=600)
             res.raise_for_status()
 
             total_size = int(res.headers.get('content-length', 0)) or None
             with progress:
-                task_id = progress.add_task(f"[green]Downloading {filepath}", total=total_size)
+                task_id = progress.add_task(f"[green]Downloading {filepath}",
+                                            total=total_size)
                 with open(filepath, "wb") as f:
                     for chunk in res.iter_content(chunk_size=8192):
                         f.write(chunk)
@@ -106,7 +113,7 @@ class GeofabrikDownloader(iGeoDownloader):
         log("info", f"[OUT] _download (filepath = <{filepath}>) GeofabrikDownloader")
         return filepath
 
-#-------------------------------------------------------------
+# -------------------------------------------------------------
 # _clip: Extract a city from a larger pbf
 #   input_pbf: Path -> Path to a pbf containing data for more
 #       than the city we're looking for
@@ -114,9 +121,10 @@ class GeofabrikDownloader(iGeoDownloader):
 #       for (south, north, east, west)
 #   city: str -> The city we want to get POIs from
 # misc: Private
-#-------------------------------------------------------------
+# -------------------------------------------------------------
     def _clip(self, input_pbf: Path, bbox: list, city: str):
-        log("info", f"[IN] _clip (input_pbf = <{input_pbf}>, bbox = {bbox}, city = <{city}>) GeofabrikDownloader")
+        log("info", f"[IN] _clip (input_pbf = <{input_pbf}>, bbox = {bbox}, \
+                city = <{city}>) GeofabrikDownloader")
         # TODO: Not fond of calling processes, find another
         #   way if possible.
         output = f"{self.data_dir}/{city.lower()}_clipped.osm.pbf"
@@ -135,13 +143,13 @@ class GeofabrikDownloader(iGeoDownloader):
         log("info", f"[OUT] _clip (output = <{output}>) GeofabrikDownloader")
         return Path(output)
 
-#-------------------------------------------------------------
+# -------------------------------------------------------------
 # find_geofabrik_region: get the smallest region containing
 #   target coordinates.
 #   lat: float -> latitude
 #   lon: float -> longitude
 #   return dict ->
-#-------------------------------------------------------------
+# -------------------------------------------------------------
     def find_geofabrik_region(self, lat: float, lon: float) -> dict:
         log("info", f"[IN] find_geofabrik_region (lat = {lat}, lon = {lon}) GeofabrikDownloader")
         # TODO: Check if we already have an up-to-date index
@@ -165,36 +173,36 @@ class GeofabrikDownloader(iGeoDownloader):
             raise ValueError(f"No Geofabrik region found with coordinates ({lat}, {lon})")
 
         candidates.sort(key=lambda x: x[0])
-        log("info", f"[OUT] find_geofabrik_region (candidate = {candidates[0][1]}) GeofabrikDownloader")
+        log("info", f"[OUT] find_geofabrik_region (candidate = {candidates[0][1]}) \
+                GeofabrikDownloader")
         return candidates[0][1]
 
 
 class CityLoader:
 
-#-------------------------------------------------------------
-# __init__: init
-#   data_dir: str -> path to the directory where we store our
-#       cities
-#-------------------------------------------------------------
+    # -------------------------------------------------------------
+    # __init__: init
+    #   data_dir: str -> path to the directory where we store our
+    #       cities
+    # -------------------------------------------------------------
     def __init__(self, data_dir: str = "data/geo"):
         log("debug", f"[IN] __init__ (data_dir = <{data_dir}>) CityLoader")
         self.bbbike = BBBikeDownloader(data_dir)
         self.geofabrik = GeofabrikDownloader(data_dir)
-        log("debug", f"[OUT] __init__ () Cityloader")
+        log("debug", "[OUT] __init__ () Cityloader")
 
-#-------------------------------------------------------------
-# dl_pbf: download the pbf associated to the requested city.
-#   city: str -> Name of the city we want the pbf from
-#-------------------------------------------------------------
+    # -------------------------------------------------------------
+    # dl_pbf: download the pbf associated to the requested city.
+    #   city: str -> Name of the city we want the pbf from
+    # -------------------------------------------------------------
     def dl_pbf(self, city: str) -> Path:
         log("debug", f"[IN] dl_pbf (city = <{city}>) CityLoader")
         try:
             p = self.bbbike.get_pbf(city)
             log("debug", f"[OUT] dl_pbf (city_pbf = <{p}>) CityLoader")
             return p
-        except:
-            # TODO: Add log to indicate fallback
+        except Exception:
             log("info", f"City '{city}' not found on bbbike, falling back to geofabrik.")
             p = self.geofabrik.get_pbf(city)
             log("debug", f"[OUT] dl_pbf (city_pbf = <{p}>) CityLoader")
-            return p 
+            return p

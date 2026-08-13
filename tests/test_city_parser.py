@@ -1,7 +1,6 @@
 """Tests for city_parser.py - OSM POI extraction."""
 import json
 import osmium
-from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -15,7 +14,7 @@ class TestPOIParserInit:
     def test_loads_config_from_file(self, mock_sr_tags_config, tmp_path):
         """Test that parser loads tag configuration."""
         parser = POIParser(mock_sr_tags_config)
-        
+
         assert hasattr(parser, "config")
         assert "categories" in parser.config
         assert "medical" in parser.config["categories"]
@@ -23,11 +22,11 @@ class TestPOIParserInit:
     def test_builds_tag_lookup(self, mock_sr_tags_config):
         """Test that tag_to_lookup dictionary is built correctly."""
         parser = POIParser(mock_sr_tags_config)
-        
+
         # Should have entries for our test tags
         assert "amenity=hospital" in parser.tag_to_category
         assert "amenity=pub" in parser.tag_to_category
-        
+
         # Verify structure
         assert "category" in parser.tag_to_category["amenity=hospital"]
         assert "color" in parser.tag_to_category["amenity=hospital"]
@@ -36,7 +35,7 @@ class TestPOIParserInit:
     def test_config_file_not_found_raises(self, tmp_path):
         """Test that missing config file raises appropriate error."""
         nonexistent = str(tmp_path / "nonexistent.json")
-        
+
         with pytest.raises(FileNotFoundError):
             POIParser(nonexistent)
 
@@ -44,7 +43,7 @@ class TestPOIParserInit:
         """Test that invalid JSON raises error."""
         config_file = tmp_path / "invalid.json"
         config_file.write_text("{ invalid json }")
-        
+
         with pytest.raises(json.JSONDecodeError):
             POIParser(str(config_file))
 
@@ -62,13 +61,13 @@ class TestNodeProcessing:
         mock_node = MagicMock(spec=osmium.osm.Node)
         mock_node.location.lat = 47.6062
         mock_node.location.lon = -122.3321
-        
+
         # Create mock tags
         mock_tags = [("amenity", "hospital"), ("name", "Test Hospital")]
         mock_node.tags = mock_tags
-        
+
         parser.node(mock_node)
-        
+
         assert len(parser.pois) == 1
         poi = parser.pois[0]
         assert poi["osm_key"] == "amenity"
@@ -81,18 +80,18 @@ class TestNodeProcessing:
         """Test that nodes without matching tags are ignored."""
         mock_node = MagicMock(spec=osmium.osm.Node)
         mock_node.tags = [("highway", "residential")]  # Not in our config
-        
+
         parser.node(mock_node)
-        
+
         assert len(parser.pois) == 0
 
     def test_node_without_tags_skipped(self, parser):
         """Test that nodes without any tags are ignored."""
         mock_node = MagicMock(spec=osmium.osm.Node)
         mock_node.tags = None
-        
+
         parser.node(mock_node)
-        
+
         assert len(parser.pois) == 0
 
     def test_node_unknown_tag_default_name(self, parser):
@@ -101,11 +100,12 @@ class TestNodeProcessing:
         mock_node.tags = [("amenity", "hospital")]
         mock_node.location.lat = 47.0
         mock_node.location.lon = -122.0
-        
+
         parser.node(mock_node)
-        
+
         poi = parser.pois[0]
         assert poi["osm_name"] == "Unknown amenity=hospital"
+
 
 class TestWayProcessing:
     """Test way processing (currently skipped in v1)."""
@@ -118,9 +118,9 @@ class TestWayProcessing:
         """Test that ways are currently skipped."""
         mock_way = MagicMock(spec=osmium.osm.Way)
         mock_way.tags = [("building", "yes")]
-        
+
         parser.way(mock_way)
-        
+
         # Should be no-op in v1
         assert len(parser.pois) == 0
 
@@ -135,22 +135,22 @@ class TestCategoryGrouping:
         mock_node_hospital.tags = [("amenity", "hospital"), ("name", "Hospital A")]
         mock_node_hospital.location.lat = 47.1
         mock_node_hospital.location.lon = -122.1
-        
+
         mock_node_pub = MagicMock(spec=osmium.osm.Node)
         mock_node_pub.tags = [("amenity", "pub"), ("name", "Pub B")]
         mock_node_pub.location.lat = 47.2
         mock_node_pub.location.lon = -122.2
-        
+
         parser = POIParser(mock_sr_tags_config)
         parser.node(mock_node_hospital)
         parser.node(mock_node_pub)
-        
+
         return parser
 
     def test_group_by_category(self, parser):
         """Test that POIs are correctly grouped by Shadowrun category."""
         grouped = parser.get_pois_by_category()
-        
+
         assert "medical" in grouped
         assert "runner_meet" in grouped
         assert len(grouped["medical"]) == 1
@@ -163,10 +163,10 @@ class TestCategoryGrouping:
         mock_node_unknown.tags = [("unknown_tag", "value")]
         mock_node_unknown.location.lat = 47.3
         mock_node_unknown.location.lon = -122.3
-        
+
         parser.node(mock_node_unknown)
         grouped = parser.get_pois_by_category()
-        
+
         # Should be in unknown category
         assert "unknown" not in grouped
 
@@ -182,9 +182,9 @@ class TestConverterFunction:
             mock_instance = MockParser.return_value
             mock_instance.pois = [{"test": "poi"}]
             mock_instance.tag_to_category = {"test": {}}
-            
+
             pois, tags = converter(sample_osm_pbf)
-            
+
             assert isinstance(pois, list)
             assert isinstance(tags, dict)
 
@@ -200,10 +200,10 @@ class TestRealFileParsing:
         """Test parsing a real small OSM PBF file."""
         if not sample_osm_pbf.exists():
             pytest.skip("No test OSM file available")
-        
+
         parser = POIParser(mock_sr_tags_config)
         parser.apply_file(str(sample_osm_pbf), locations=True)
-        
+
         # Just verify it doesn't crash
         assert parser is not True  # Actually should be >= 0
 
@@ -219,6 +219,6 @@ class TestPerformance:
         # osmium.SimpleHandler is inherently streaming
         # This verifies we're not loading entire file into memory
         parser = POIParser(mock_sr_tags_config)
-        
+
         # Verify it's a SimpleHandler (streaming)
         assert isinstance(parser, osmium.SimpleHandler)

@@ -3,13 +3,14 @@
 import requests
 
 NOMINATIM_SEARCH_URL = "https://nominatim.openstreetmap.org/search"
- 
-#-------------------------------------------------------------
+
+
+# -------------------------------------------------------------
 # geocode_city: Get the geographic data for a city (name,
 #   latitude, longitude, bounding box)
 #   city: str -> The city we want the data associated
 #   return dict -> an aggregate of the aforementioned datas
-#------------------------------------------------------------- 
+# -------------------------------------------------------------
 def geocode_city(city: str) -> dict:
     resp = requests.get(
         NOMINATIM_SEARCH_URL,

@@ -7,6 +7,7 @@ from pathlib import Path
 
 logger = logging.getLogger("SR_city_converter")
 
+
 class MyJSONFormatter(logging.Formatter):
     def __init__(self, *, fmt_keys: dict[str, str] | None = None):
         super().__init__()
@@ -35,7 +36,7 @@ class MyJSONFormatter(logging.Formatter):
         message = {
             key: msg_val
             if (msg_val := always_fields.pop(val, None)) is not None
-else getattr(record, val)
+            else getattr(record, val)
             for key, val in self.fmt_keys.items()
         }
         message.update(always_fields)
@@ -48,6 +49,7 @@ def setup_logging():
         config = json.load(f_in)
         config["handlers"]["file"]["filename"] += str(random.randrange(10000))
     logging.config.dictConfig(config)
+
 
 def log(severity: str, message: str):
     # __debug__ is enabled if we do not run with 'python3 -O'
@@ -66,5 +68,3 @@ def log(severity: str, message: str):
     else:
         # in prod. No traces
         return
-
-

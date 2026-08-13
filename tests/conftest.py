@@ -1,10 +1,5 @@
 """Shared pytest fixtures and configuration."""
 import json
-import os
-import tempfile
-from pathlib import Path
-from unittest.mock import MagicMock, patch
-
 import pytest
 
 
@@ -16,11 +11,13 @@ def test_data_dir(tmp_path_factory):
     geo_dir.mkdir(parents=True, exist_ok=True)
     return geo_dir
 
+
 @pytest.fixture
 def downloader(test_data_dir):
     """Create a GeofabrikDownloader instance for mapping tests."""
     from city_mapping import GeofabrikDownloader
     return GeofabrikDownloader(str(test_data_dir))
+
 
 @pytest.fixture(scope="session")
 def sample_osm_pbf(test_data_dir):
@@ -37,7 +34,7 @@ def mock_logger_config(tmp_path):
     """Create a minimal logger configuration file."""
     config_dir = tmp_path / "config"
     config_dir.mkdir(parents=True, exist_ok=True)
-    
+
     config = {
         "version": 1,
         "disable_existing_loggers": False,
@@ -64,7 +61,7 @@ def mock_logger_config(tmp_path):
             "level": "DEBUG"
         }
     }
-    
+
     config_file = config_dir / "logger.json"
     config_file.write_text(json.dumps(config))
     return config_dir
@@ -95,7 +92,7 @@ def mock_sr_tags_config(tmp_path):
             }
         }
     }
-    
+
     config_dir = tmp_path / "config"
     config_dir.mkdir(parents=True, exist_ok=True)
     config_file = config_dir / "SR_tags.json"
@@ -142,11 +139,12 @@ def mock_geofabrik_index():
             {
                 "geometry": {
                     "type": "Polygon",
-                    "coordinates": [[[-122.5, 47.4], [-122.2, 47.4], [-122.2, 47.7], [-122.5, 47.7], [-122.5, 47.4]]]
+                    "coordinates": [[[-122.5, 47.4], [-122.2, 47.4], [-122.2, 47.7],
+                                    [-122.5, 47.7], [-122.5, 47.4]]]
                 },
                 "properties": {
                     "name": "Seattle Metro",
-                    "urls":{
+                    "urls": {
                         "pbf": "https://example.com/seattle.pbf",
                         "poly": "https://example.com/seattle.poly"
                     },

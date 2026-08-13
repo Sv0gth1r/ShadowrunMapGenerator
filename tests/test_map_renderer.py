@@ -1,5 +1,4 @@
 """Tests for map_renderer.py - Folium map generation."""
-import json
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -24,16 +23,16 @@ class TestMapGeneratorInit:
         """Test initialization stores input data."""
         pois = [sample_poi]
         config = {"amenity=hospital": {"category": "medical", "color": "#00ff00"}}
-        
+
         generator = MapGenerator(pois, config)
-        
+
         assert generator.pois == pois
         assert generator.tag_config == config
 
     def test_init_with_empty_pois(self):
         """Test initialization with empty POI list."""
         generator = MapGenerator([], {})
-        
+
         assert generator.pois == []
         assert generator.tag_config == {}
 
@@ -58,7 +57,7 @@ class TestMapCenterCalculation:
     def test_center_is_average_of_points(self, generator_with_pois):
         """Test that center is arithmetic mean of all points."""
         lat, lon = generator_with_pois._get_map_center()
-        
+
         assert lat == pytest.approx(47.5, rel=0.01)
         assert lon == pytest.approx(-122.5, rel=0.01)
 
@@ -66,9 +65,10 @@ class TestMapCenterCalculation:
         """Test that single POI maps to itself."""
         generator = MapGenerator([sample_poi], {})
         lat, lon = generator._get_map_center()
-        
+
         assert lat == pytest.approx(sample_poi["lat"])
         assert lon == pytest.approx(sample_poi["lon"])
+
 
 class TestIconColorMapping:
     """Test category to icon color conversion."""
@@ -119,9 +119,9 @@ class TestMarkerGeneration:
         """Test that a Marker is created for each POI."""
         mock_marker_instance = MagicMock()
         mock_marker_class.return_value = mock_marker_instance
-        
+
         generator._add_pois()
-        
+
         assert mock_marker_class.call_count == len(generator.pois)
 
     @patch("folium.Marker")
@@ -129,9 +129,9 @@ class TestMarkerGeneration:
         """Test that marker location matches POI coordinates."""
         mock_marker_instance = MagicMock()
         mock_marker_class.return_value = mock_marker_instance
-        
+
         generator._add_pois()
-        
+
         call_kwargs = mock_marker_class.call_args_list[0][1]
         assert call_kwargs["location"] == [generator.pois[0]["lat"], generator.pois[0]["lon"]]
 
@@ -140,9 +140,9 @@ class TestMarkerGeneration:
         """Test that popup contains POI name."""
         mock_marker_instance = MagicMock()
         mock_marker_class.return_value = mock_marker_instance
-        
+
         generator._add_pois()
-        
+
         # Should include HTML with name
         assert "Harborview Medical Center" in str(generator.pois[0].get("osm_name", ""))
 
@@ -151,9 +151,9 @@ class TestMarkerGeneration:
         """Test that icon is configured correctly."""
         mock_marker_instance = MagicMock()
         mock_marker_class.return_value = mock_marker_instance
-        
+
         generator._add_pois()
-        
+
         call_kwargs = mock_marker_class.call_args_list[0][1]
         icon_obj = call_kwargs['icon']
         assert isinstance(icon_obj, folium.Icon)
@@ -179,7 +179,7 @@ class TestMapGeneration:
         }
         generator = MapGenerator([poi], {})
         generator.generate_map(tmp_path / "output.html")
-        
+
         mock_map_class.assert_called_once()
         assert mock_map_instance.save.called
 
@@ -189,7 +189,7 @@ class TestMapGeneration:
         """Test that dark_matter tile provider is used."""
         mock_map_instance = MagicMock()
         mock_map_class.return_value = mock_map_instance
-        
+
         poi = {
             "lat": 47.0, "lon": -122.0,
             "osm_key": "amenity", "osm_value": "hospital",
@@ -197,7 +197,7 @@ class TestMapGeneration:
         }
         generator = MapGenerator([poi], {})
         generator.generate_map(Path("/tmp/test.html"))
-        
+
         call_kwargs = mock_map_class.call_args[1]
         assert call_kwargs["tiles"] == "CartoDB dark_matter"
 
@@ -215,7 +215,7 @@ class TestMapGeneration:
         generator = MapGenerator([poi], {})
 
         generator.generate_map(Path("/tmp/test.html"))
-        
+
         call_kwargs = mock_map_class.call_args[1]
         assert call_kwargs["zoom_start"] == 13
 
@@ -225,7 +225,7 @@ class TestMapGeneration:
         """Test that map is saved to specified path."""
         mock_map_instance = MagicMock()
         mock_map_class.return_value = mock_map_instance
-        
+
         output_path = tmp_path / "my_custom_map.html"
         poi = {
             "lat": 47.0, "lon": -122.0,
@@ -234,7 +234,7 @@ class TestMapGeneration:
         }
         generator = MapGenerator([poi], {})
         generator.generate_map(output_path)
-        
+
         mock_map_instance.save.assert_called_once_with(output_path)
 
 
@@ -245,16 +245,14 @@ class TestPopupHTMLGeneration:
         """Test popup HTML includes name, category, and description."""
         # This is tested indirectly via _add_pois, but could be unit tested
         # with a mock tag_config
-        config = {
-            "amenity=hospital": {
-                "category": "medical",
-                "color": "#00ff00",
-                "description": "Testing description"
-            }
-        }
-        
-        generator = MapGenerator([sample_poi], config)
-        
+        # config = {
+        #    "amenity=hospital": {
+        #        "category": "medical",
+        #        "color": "#00ff00",
+        #        "description": "Testing description"
+        #    }
+        # }
+
         # Manually trigger HTML generation (since _add_pois creates Markers)
         # We'd need to refactor to extract HTML generation into its own method
         # For now, this is covered in integration tests
@@ -277,12 +275,12 @@ class TestFullMapGeneration:
                 "description": "Medical"
             }
         }
-        
+
         generator = MapGenerator([sample_poi], config)
         output_path = tmp_path / "test_map.html"
-        
+
         generator.generate_map(output_path)
-        
+
         # Verify file exists and contains HTML
         assert output_path.exists()
         content = output_path.read_text()
@@ -293,17 +291,20 @@ class TestFullMapGeneration:
     def test_map_generates_multiple_pois(self, tmp_path):
         """Test map with multiple POIs."""
         pois = [
-            {"lat": 47.0, "lon": -122.0, "osm_key": "amenity", "osm_value": "hospital", "osm_name": "Hosp1"},
-            {"lat": 47.1, "lon": -122.1, "osm_key": "amenity", "osm_value": "pub", "osm_name": "Pub1"},
-            {"lat": 47.2, "lon": -122.2, "osm_key": "shop", "osm_value": "convenience", "osm_name": "Shop1"},
+            {"lat": 47.0, "lon": -122.0,
+             "osm_key": "amenity", "osm_value": "hospital", "osm_name": "Hosp1"},
+            {"lat": 47.1, "lon": -122.1,
+             "osm_key": "amenity", "osm_value": "pub", "osm_name": "Pub1"},
+            {"lat": 47.2, "lon": -122.2,
+             "osm_key": "shop", "osm_value": "convenience", "osm_name": "Shop1"},
         ]
         config = {}
-        
+
         generator = MapGenerator(pois, config)
         output_path = tmp_path / "multi_poi_map.html"
-        
+
         generator.generate_map(output_path)
-        
+
         assert output_path.exists()
         content = output_path.read_text()
         # Should contain all three POIs

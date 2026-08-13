@@ -18,16 +18,16 @@ class TestGeocodeCity:
             "display_name": "Seattle, King County, Washington, USA",
             "boundingbox": ["47.4810", "47.7341", "-122.4598", "-122.2244"]
         }]
-        
+
         responses.add(
             responses.GET,
             NOMINATIM_SEARCH_URL,
             json=mock_response,
             status=200
         )
-        
+
         result = geocode_city("Seattle")
-        
+
         assert result["display_name"] == "Seattle, King County, Washington, USA"
         assert result["lat"] == 47.6062
         assert result["lon"] == -122.3321
@@ -44,7 +44,7 @@ class TestGeocodeCity:
             json=[],
             status=200
         )
-        
+
         with pytest.raises(ValueError, match="City .* not found"):
             geocode_city("NonexistentCity12345")
 
@@ -56,7 +56,7 @@ class TestGeocodeCity:
             NOMINATIM_SEARCH_URL,
             status=503
         )
-        
+
         with pytest.raises(Exception):  # requests raises for non-2xx
             geocode_city("Seattle")
 
@@ -64,10 +64,10 @@ class TestGeocodeCity:
         """Test that timeouts are handled with proper timeout setting."""
         with patch("geotools.requests.get") as mock_get:
             mock_get.side_effect = Exception("Connection timed out")
-            
+
             with pytest.raises(Exception):
                 geocode_city("Seattle")
-            
+
             # Verify timeout was passed
             call_args = mock_get.call_args
             assert call_args.kwargs["timeout"] == 15
@@ -81,16 +81,16 @@ class TestGeocodeCity:
             "display_name": "Paris, France",
             "boundingbox": ["48.8155", "48.9021", "2.2241", "2.4699"]
         }]
-        
+
         responses.add(
             responses.GET,
             NOMINATIM_SEARCH_URL,
             json=mock_response,
             status=200
         )
-        
+
         geocode_city("Paris")
-        
+
         # Verify User-Agent was set
         request = responses.calls[0].request
         assert request.headers["User-Agent"] == "shadowrun-mapper/0.1"
@@ -104,16 +104,16 @@ class TestGeocodeCity:
             "display_name": "Seattle",
             "boundingbox": ["47.4810", "47.7341", "-122.4598", "-122.2244"]
         }]
-        
+
         responses.add(
             responses.GET,
             NOMINATIM_SEARCH_URL,
             json=mock_response,
             status=200
         )
-        
+
         result = geocode_city("Seattle")
-        
+
         assert all(isinstance(x, float) for x in result["bbox"])
         assert all(isinstance(x, float) for x in [result["lat"], result["lon"]])
 
@@ -129,7 +129,7 @@ class TestGeocodeCity:
             ("Berlin", "Germany"),
             ("Sydney", "Australia"),
         ]
-        
+
         for city_name, expected_country in test_cities:
             # Each would need real API calls - mark as slow
             pytest.skip("Real API calls - run manually or with --runslow")
@@ -153,16 +153,16 @@ class TestNominatimCompliance:
             "display_name": "Seattle",
             "boundingbox": ["47.4810", "47.7341", "-122.4598", "-122.2244"]
         }]
-        
+
         responses.add(
             responses.GET,
             NOMINATIM_SEARCH_URL,
             json=mock_response,
             status=200
         )
-        
+
         geocode_city("Seattle")
-        
+
         call_params = responses.calls[0].request.params
         assert call_params["limit"] == "1"
         assert call_params["format"] == "json"
