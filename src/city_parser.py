@@ -66,7 +66,7 @@ class POIParser(osmium.SimpleHandler):
         for k, v in tags:
             key = f"{k}={v}"
             if key in self.tag_to_category:
-                name = tags.get("name", f"Unknown {key}")
+                name = tags.get("name", f"Unknown {key}") if hasattr(tags, 'get') else dict(tags).get("name", f"Unknown {key}")
                 return {
                     "osm_key": k,
                     "osm_value": v,
@@ -79,6 +79,7 @@ class POIParser(osmium.SimpleHandler):
         """Group POIs by Shadowrun category for easy querying."""
         grouped: Dict[str, List[Dict[str, Any]]] = {}
         for poi in self.pois:
+            print(f"get_pois_by_category | {poi['osm_key']}={poi['osm_value']}")
             cat = self.tag_to_category.get(
                 f"{poi['osm_key']}={poi['osm_value']}", {}
             ).get("category", "unknown")

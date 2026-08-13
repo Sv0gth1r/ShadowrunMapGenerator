@@ -8,6 +8,8 @@ class MapGenerator:
     fmap: folium.Map = {}
 
     def __init__(self, pois: List[Dict[str, Any]], tag_config: Dict[str, Dict[str, Any]]):
+        if pois == None:
+            raise AttributeError("POI list is None")
         self.pois = pois
         self.tag_config = tag_config
 

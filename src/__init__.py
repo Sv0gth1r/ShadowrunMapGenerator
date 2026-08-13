@@ -5,7 +5,7 @@ import json
 import logging.config
 from applogger import *
 from pathlib import Path
-from mapping import CityLoader 
+from city_mapping import CityLoader 
 from city_parser import converter
 from map_renderer import MapGenerator
 

@@ -2,6 +2,7 @@
 
 import requests
 import osmium
+import subprocess
 
 from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, DownloadColumn, TransferSpeedColumn
 from urllib.parse import urlsplit
@@ -58,6 +59,7 @@ class GeofabrikDownloader(iGeoDownloader):
         region = self.find_geofabrik_region(coordinates["lat"], coordinates["lon"])
         
         # 3. Download the region from geofabrik
+        print(f"get_pbf | {region}")
         log("info", f"Geofabrik URL: {region['urls']['pbf']}")
         region_pbf = self._download(region["urls"]["pbf"], f"{city}_region.osm.pbf")
 
@@ -68,7 +70,7 @@ class GeofabrikDownloader(iGeoDownloader):
 
     def _download(self, url: str, filename: str):
         log("info", f"[IN] _download (url = <{url}>, filename = <{filename}>) GeofabrikDownloader")
-        filepath = Path(f"../{self.data_dir}/{urlsplit(url).path.replace('/', '_')}")
+        filepath = Path(f"{self.data_dir}/{urlsplit(url).path.replace('/', '_')}")
         progress = Progress(
             SpinnerColumn(),
             TextColumn("[progress.description]{task.description}"),
@@ -117,9 +119,8 @@ class GeofabrikDownloader(iGeoDownloader):
         log("info", f"[IN] _clip (input_pbf = <{input_pbf}>, bbox = {bbox}, city = <{city}>) GeofabrikDownloader")
         # TODO: Not fond of calling processes, find another
         #   way if possible.
-        import subprocess
         output = f"{self.data_dir}/{city.lower()}_clipped.osm.pbf"
-        if Path.exists(Path(f"../{output}")):
+        if Path.exists(Path(f"{output}")):
             log("info", f"file {output} already exists. No need to extract again.")
             log("info", f"[OUT] _clip (output = <{output}>) GeofabrikDownloader")
             return Path(output)
@@ -129,7 +130,7 @@ class GeofabrikDownloader(iGeoDownloader):
             "-b", f"{west},{south},{east},{north}",
             "--overwrite",
             f"{input_pbf}",
-            "-o", str(f"../{output}"),
+            "-o", str(f"{output}"),
             ], check=True)
         log("info", f"[OUT] _clip (output = <{output}>) GeofabrikDownloader")
         return Path(output)

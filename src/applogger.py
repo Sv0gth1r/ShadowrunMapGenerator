@@ -20,13 +20,17 @@ class MyJSONFormatter(logging.Formatter):
     def _prepare_log_dict(self, record: logging.LogRecord):
         always_fields = {
             "message": record.getMessage(),
-            "timestamp": dt.datetime.fronttimestamp(
+            "timestamp": dt.datetime.fromtimestamp(
                 record.created, tz=dt.timezone.utc).isoformat(),
         }
         if record.exc_info is not None:
             always_fields["exc_info"] = self.formatException(record.exc_info)
+        else:
+            always_fields["exc_info"] = None
         if record.stack_info is not None:
             always_fields["stack_info"] = self.formatStack(record.stack_info)
+        else:
+            always_fields["stack_info"] = None
 
         message = {
             key: msg_val
