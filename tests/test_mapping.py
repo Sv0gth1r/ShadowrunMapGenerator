@@ -192,8 +192,13 @@ class TestGeofabrikDownloader:
         input_pbf = tmp_path / "input.osm.pbf"
         input_pbf.write_bytes(b"test")
 
+        bbox = [47.4, 47.8, -122.5, -122.2]
+
         with patch("city_mapping.subprocess.run") as mock_run:
             mock_run.return_value = Mock()
+
+            with patch("pathlib.Path.exists", return_value=False):
+                downloader._clip(input_pbf, bbox, "testcity")
 
             # Verify subprocess call
             mock_run.assert_called_once()
