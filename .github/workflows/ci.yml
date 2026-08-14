@@ -85,6 +85,6 @@ jobs:
         run: pip install -r requirements-dev.txt
       - name: Run integration tests
         run: |
-          pytest -m integration -v --tb=short
+          pytest -v --cov=src --cov-report=html --cov-fail-under=80
         env:
           TEST_OSM_API_KEY: ${{ secrets.TEST_OSM_API_KEY }}
